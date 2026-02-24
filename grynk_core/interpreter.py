@@ -107,6 +107,17 @@ class Interpreter:
         self.globals.define('type', lambda v: GrynkString(self._type_name(v)))
         self.globals.define('int', lambda v: int(unwrap(v)) if v is not None else 0)
         self.globals.define('float', lambda v: float(unwrap(v)) if v is not None else 0.0)
+        
+        def _num(v):
+            raw = unwrap(v)
+            if isinstance(raw, (int, float)): return raw
+            try:
+                s = str(raw)
+                return float(s) if '.' in s or 'e' in s.lower() else int(s)
+            except:
+                return 0
+        self.globals.define('num', _num)
+        
         self.globals.define('str', lambda v: GrynkString(grynk_str(v)))
         self.globals.define('bool', lambda v: grynk_bool(v))
 

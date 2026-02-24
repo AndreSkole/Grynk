@@ -1,0 +1,80 @@
+# Grynk Pro Calculator 🧮
+gx.banner("PRO CALCULATOR", "blue")
+
+# 1. State
+mut current = ""
+mut last_op = ""
+mut last_val = 0
+
+# 2. Window Setup
+let win = gx.window("Grynk Calculator 1.2", 300, 450)
+
+# Display Label (Big and bold)
+let display = gx.label("0")
+
+# 3. Helper Functions
+fn update(val) {
+    if current == "0" {
+        mut current = "{val}"
+    } else {
+        mut current = "{current}{val}"
+    }
+    display.set(current)
+}
+
+fn set_op(op) {
+    mut last_val = num(current)
+    mut last_op = op
+    mut current = ""
+    display.set("{op}")
+}
+
+fn calculate() {
+    let v1 = last_val
+    let v2 = num(current)
+    mut current = ""
+    
+    if last_op == "+" { mut current = "{v1 + v2}" }
+    if last_op == "-" { mut current = "{v1 - v2}" }
+    if last_op == "*" { mut current = "{v1 * v2}" }
+    if last_op == "/" { 
+        if v2 == 0 { mut current = "Error" }
+        else { mut current = "{v1 / v2}" }
+    }
+    
+    display.set(current)
+}
+
+fn clear() {
+    mut current = ""
+    mut last_op = ""
+    mut last_val = 0
+    display.set("0")
+}
+
+# 4. Building the Grid
+# Row 1: 7 8 9 /
+gx.button("7", fn() { update(7) }, 1)
+gx.button("8", fn() { update(8) }, 1)
+gx.button("9", fn() { update(9) }, 1)
+gx.button("/", fn() { set_op("/") }, 1)
+
+# Row 2: 4 5 6 *
+gx.button("4", fn() { update(4) }, 2)
+gx.button("5", fn() { update(5) }, 2)
+gx.button("6", fn() { update(6) }, 2)
+gx.button("*", fn() { set_op("*") }, 2)
+
+# Row 3: 1 2 3 -
+gx.button("1", fn() { update(1) }, 3)
+gx.button("2", fn() { update(2) }, 3)
+gx.button("3", fn() { update(3) }, 3)
+gx.button("-", fn() { set_op("-") }, 3)
+
+# Row 4: C 0 = +
+gx.button("C", clear, 4)
+gx.button("0", fn() { update(0) }, 4)
+gx.button("=", calculate, 4)
+gx.button("+", fn() { set_op("+") }, 4)
+
+gx.gui_run()

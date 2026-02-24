@@ -131,35 +131,55 @@ class GxGUI:
         self.widgets = []
         self._ctk = _try_import('customtkinter')
 
-    def add_button(self, text, callback):
+    def add_button(self, text, callback, row=None):
+        target = self._get_target(row)
         if self._ctk:
-            btn = self._ctk.CTkButton(self.root, text=unwrap(text), command=lambda: self._trigger(callback))
+            btn = self._ctk.CTkButton(target, text=unwrap(text), command=lambda: self._trigger(callback), width=60)
         else:
             import tkinter as tk
-            btn = tk.Button(self.root, text=unwrap(text), command=lambda: self._trigger(callback))
-        btn.pack(pady=10, padx=20)
+            btn = tk.Button(target, text=unwrap(text), command=lambda: self._trigger(callback))
+        btn.pack(side="left" if row is not None else "top", pady=5, padx=5)
         self.widgets.append(btn)
         return btn
 
-    def add_label(self, text):
+    def add_label(self, text, row=None):
+        target = self._get_target(row)
         if self._ctk:
-            lbl = self._ctk.CTkLabel(self.root, text=unwrap(text))
+            lbl = self._ctk.CTkLabel(target, text=unwrap(text))
         else:
             import tkinter as tk
-            lbl = tk.Label(self.root, text=unwrap(text))
-        lbl.pack(pady=5, padx=20)
+            lbl = tk.Label(target, text=unwrap(text))
+        lbl.pack(side="left" if row is not None else "top", pady=5, padx=5)
         self.widgets.append(lbl)
         return GxGUIWidget(lbl)
 
-    def add_entry(self, placeholder=""):
+    def add_entry(self, placeholder="", row=None):
+        target = self._get_target(row)
         if self._ctk:
-            entry = self._ctk.CTkEntry(self.root, placeholder_text=unwrap(placeholder))
+            entry = self._ctk.CTkEntry(target, placeholder_text=unwrap(placeholder))
         else:
             import tkinter as tk
-            entry = tk.Entry(self.root)
-        entry.pack(pady=5, padx=20)
+            entry = tk.Entry(target)
+        entry.pack(side="left" if row is not None else "top", fill="x" if row is None else "none", expand=True, pady=5, padx=5)
         self.widgets.append(entry)
         return GxGUIWidget(entry)
+
+    def _get_target(self, row_id):
+        if row_id is None:
+            return self.root
+        
+        # Lazy check/create row frame
+        attr_name = f"_row_frame_{row_id}"
+        if not hasattr(self, attr_name):
+            if self._ctk:
+                frame = self._ctk.CTkFrame(self.root, fg_color="transparent")
+            else:
+                import tkinter as tk
+                frame = tk.Frame(self.root)
+            frame.pack(fill="x", padx=10)
+            setattr(self, attr_name, frame)
+        
+        return getattr(self, attr_name)
 
     def run(self):
         self.root.mainloop()
