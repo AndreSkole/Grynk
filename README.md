@@ -17,6 +17,23 @@ The installer will automatically set up the CLI tool and seamlessly install the 
 3. Run the installer and click Next.
 4. **Done!** Open any terminal and run your code.
 
+### Linux & macOS
+To install Grynk from source on Linux or macOS:
+1. Clone the repository.
+2. Run the setup script:
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+
+---
+
+## 🌤️ Showcase: Weather App
+Grynk comes with a live terminal weather app!
+```bash
+grynk examples/weather.grk
+```
+
 ---
 
 ## ⚡ Quick Start
