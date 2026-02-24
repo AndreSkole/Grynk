@@ -152,6 +152,7 @@ class GrynkList:
             'shift':    lambda: data.pop(0) if data else None,
             'unshift':  lambda v: (data.insert(0, v), self)[1],
             'len':      lambda: len(data),
+            'get':      lambda idx, default=None: (data[int(unwrap(idx))] if 0 <= int(unwrap(idx)) < len(data) else default),
             'first':    lambda: data[0] if data else None,
             'last':     lambda: data[-1] if data else None,
             'reverse':  lambda: GrynkList(list(reversed(data))),
