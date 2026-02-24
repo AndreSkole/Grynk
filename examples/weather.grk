@@ -1,0 +1,111 @@
+# weather.grk — Live Terminal Weather App
+
+# (Requests is optionally handled by gx internally)
+
+gx.banner("Live Terminal Weather 🌤️", "cyan")
+
+# We'll use a fixed location (e.g., London) or let the user choose
+let city_name = ask("Enter a city (or press Enter for London): ")
+if city_name == "" {
+    city_name = "London"
+}
+
+say "Fetching coordinates for {city_name}..."
+
+# 1. Geocoding API to get lat/lon for the city
+let geo_url = "https://geocoding-api.open-meteo.com/v1/search?name={city_name}&count=1&language=en&format=json"
+let geo_resp = gx.get(geo_url)
+
+if geo_resp.status != 200 {
+    gx.log("Failed to reach geocoding API.", "error")
+    gx.exit(1)
+}
+
+let geo_data = geo_resp.json
+let results = geo_data.get("results")
+
+if type(results) == "null" {
+    gx.log("Could not find city: {city_name}", "error")
+    gx.exit(1)
+}
+
+let first_result = results[0]
+
+let lat = first_result.get("latitude")
+let lon = first_result.get("longitude")
+let country = first_result.get("country")
+let resolved_name = first_result.get("name")
+
+say "\nFound: {resolved_name}, {country} (Lat: {lat}, Lon: {lon})"
+
+# 2. Weather API to get the current weather and daily forecast
+# We use Open-Meteo which is free and requires no API key.
+let weather_url = "https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto"
+
+gx.spinner("Downloading weather data...", 1.5)
+let w_resp = gx.get(weather_url)
+
+if w_resp.status != 200 {
+    gx.log("Failed to fetch weather data.", "error")
+    gx.exit(1)
+}
+
+let w_data = w_resp.json
+
+# Current Weather
+let current = w_data.get("current_weather")
+let temp = current.get("temperature")
+let wind = current.get("windspeed")
+
+gx.banner("Current Weather in {resolved_name}", "green")
+say "Temperature: {temp}°C"
+say "Wind Speed:  {wind} km/h"
+say ""
+
+# Daily Forecast Table
+gx.banner("5-Day Forecast", "yellow")
+
+let daily = w_data.get("daily")
+let time_list = daily.get("time")
+let max_temps = daily.get("temperature_2m_max")
+let min_temps = daily.get("temperature_2m_min")
+
+# Build a list of row dicts for gx.table
+let rows = []
+mut i = 0
+
+# WMO Weather interpretation function
+fn get_condition(code) {
+    if code == 0 { return "Clear ☀️" }
+    if code == 1 { return "Mostly Clear 🌤️" }
+    if code == 2 { return "Partly Cloudy ⛅" }
+    if code == 3 { return "Overcast ☁️" }
+    if code == 45 or code == 48 { return "Foggy 🌫️" }
+    if code >= 51 and code <= 55 { return "Drizzle 🌧️" }
+    if code >= 61 and code <= 65 { return "Rain 🌧️" }
+    if code >= 71 and code <= 75 { return "Snow ❄️" }
+    if code >= 95 { return "Thunderstorm ⛈️" }
+    return "Unknown 🤔"
+}
+
+let codes = daily.get("weathercode")
+
+while i < len(time_list) and i < 5 {
+    let day_date = time_list[i]
+    let d_max = max_temps[i]
+    let d_min = min_temps[i]
+    let cond = get_condition(codes[i])
+    
+    rows.push({
+        "Date": day_date,
+        "Min °C": d_min,
+        "Max °C": d_max,
+        "Condition": cond
+    })
+    
+    i += 1
+}
+
+gx.table(rows)
+say ""
+gx.log("Data provided by Open-Meteo.com", "info")
