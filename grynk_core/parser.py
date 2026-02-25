@@ -669,7 +669,7 @@ class Parser:
         )
 
     def parse_dict_or_block(self):
-        """Heuristic: if we see { expr : ... it's a dict literal, else raise."""
+        """Heuristic: if we see { expr : ... it's a dict literal."""
         line = self.current().line
         self.advance()  # consume {
         self.skip_newlines()
@@ -677,34 +677,35 @@ class Parser:
         if self.check(TT.RBRACE):
             self.advance()
             return DictLiteral([], line=line)
-        # Peek: is this key: val ?
+        
+        # Check for first key: val
         save_pos = self.pos
         try:
             key = self.parse_expr()
-            if self.check(TT.COLON):
-                # It IS a dict literal
-                self.advance()
-                val = self.parse_expr()
-                pairs = [(key, val)]
+            self.expect(TT.COLON, msg="Expected ':' after key in dict literal")
+            val = self.parse_expr()
+            pairs = [(key, val)]
+            self.skip_newlines()
+            while self.match_tok(TT.COMMA):
                 self.skip_newlines()
-                while self.match_tok(TT.COMMA):
-                    self.skip_newlines()
-                    if self.check(TT.RBRACE):
-                        break
-                    k = self.parse_expr()
-                    self.expect(TT.COLON)
-                    v = self.parse_expr()
-                    pairs.append((k, v))
-                    self.skip_newlines()
-                self.expect(TT.RBRACE)
-                return DictLiteral(pairs, line=line)
-            else:
-                raise GrynkParseError("Expected ':' in dict literal", line=self.current().line)
-        except GrynkParseError:
-            # not a dict — restore and raise to caller
+                if self.check(TT.RBRACE):
+                    break
+                k = self.parse_expr()
+                self.expect(TT.COLON, msg="Expected ':' after key in dict literal")
+                v = self.parse_expr()
+                pairs.append((k, v))
+                self.skip_newlines()
+            self.expect(TT.RBRACE, msg="Expected '}' to close dict literal")
+            return DictLiteral(pairs, line=line)
+        except GrynkParseError as e:
+            # If we already passed the colon, it's definitely a dict, so re-raise
+            if self.pos > save_pos + 1:
+                raise e
+            
+            # Otherwise, backtrack and give the generic error
             self.pos = save_pos
             raise GrynkParseError(
-                "Unexpected '{' in expression context (use a dict literal {key: val})",
+                f"Unexpected '{{' in expression context (did you mean to use a dict? {e.message})",
                 line=line
             )
 

@@ -145,6 +145,37 @@ Grynk requires **zero imports ever**. Every powerful tool you need is built dire
 
 ---
 
+## 🖼️ Graphical UI (GxGUI)
+
+Grynk includes a premium, built-in GUI engine that makes creating desktop applications incredibly simple. It uses **CustomTkinter** for a modern, sleek look by default.
+
+```grynk
+# A simple "Counter" app in 10 lines
+let win = gx.window("Grynk App", 400, 300)
+let lbl = gx.label("Welcome to Grynk!")
+let count = 0
+
+fn on_click() {
+    mut count = count + 1
+    lbl.set("Clicked {count} times!")
+}
+
+gx.button("Click Me!", on_click)
+gx.gui_run()
+```
+
+### GUI Reference
+
+| Method | Description |
+| :--- | :--- |
+| `gx.window(title, w, h)` | Creates a new application window |
+| `gx.label(text)` | Adds a text label to the window |
+| `gx.button(text, fn)` | Adds a button that runs a function when clicked |
+| `gx.entry(placeholder)` | Adds a text input field |
+| `gx.gui_run()` | Starts the application event loop |
+
+---
+
 ## 🧱 Building from Source
 
 If you want to build the `grynk.exe` compiler from source:

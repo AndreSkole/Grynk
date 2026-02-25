@@ -1,0 +1,19 @@
+let url = "https://httpbin.org/post"
+let headers = {
+    "X-Test": "Success",
+    "Authorization": "Bearer TEST_KEY"
+}
+let body = { "foo": "bar" }
+
+let resp = gx.post(url, body, headers)
+let json = resp.json
+let sent_headers = json.get("headers")
+
+say "Sent Header X-Test: {sent_headers.get('X-Test')}"
+say "Sent Authorization: {sent_headers.get('Authorization')}"
+
+if sent_headers.get("X-Test") == "Success" {
+    gx.log("Header support verified!", "info")
+} else {
+    gx.log("Header support failed.", "error")
+}
